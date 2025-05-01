@@ -1,0 +1,43 @@
+# Acornfile - Configuration for Django REST API project
+
+args:
+  debug: true
+  port: 8000
+  db_name: db.mysql
+
+services:
+  django:
+    image: python:3.8
+    command: python mysite/manage.py runserver 0.0.0.0:${port}
+    volumes:
+      - ./mysite:/app/mysite
+    environment:
+      - DEBUG=${debug}
+      - DB_NAME=${api_db}
+    ports:
+      - "${port}:8000"
+  db:
+    image: sqlite
+    volumes:
+      - ./mysite/db.sqlite3:/data/db.sqlite3
+
+jobs:
+  migrate:
+    command: python mysite/manage.py migrate
+  collectstatic:
+    command: python mysite/manage.py collectstatic --noinput
+
+containers:
+  web:
+    build:
+      context: .
+      dockerfile: mysite/Dockerfile
+    ports:
+      - "8000:8000"
+    environment:
+      - DEBUG=${debug}
+      - DB_NAME=${api_db}
+    volumes:
+      - ./mysite:/app/mysite
+    depends_on:
+      - db
